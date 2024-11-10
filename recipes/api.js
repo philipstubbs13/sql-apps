@@ -21,16 +21,28 @@ router.get("/detail", (_, res) =>
  * Student code starts here
  */
 
-// connect to postgres
+const pg = require("pg");
+const pool = new pg.Pool({
+  user: "postgres",
+  host: "localhost",
+  database: "recipeguru",
+  password: "lol",
+  port: 5432,
+});
 
 router.get("/search", async function (req, res) {
   console.log("search recipes");
-
-  // return recipe_id, title, and the first photo as url
-  //
-  // for recipes without photos, return url as default.jpg
-
-  res.status(501).json({ status: "not implemented", rows: [] });
+  const { rows } = await pool.query(`
+    SELECT DISTINCT ON (r.recipe_id)
+      r.recipe_id, r.title, COALESCE(rp.url, 'default.jpg') AS url
+    FROM
+      recipes r
+    LEFT JOIN
+      recipes_photos rp
+    ON
+      r.recipe_id = rp.recipe_id;
+  `);
+  res.json({ rows }).end();
 });
 
 router.get("/get", async (req, res) => {
@@ -51,7 +63,12 @@ router.get("/get", async (req, res) => {
   // return the body as body
   // if no row[0] has no photo, return it as default.jpg
 
-  res.status(501).json({ status: "not implemented" });
+  res.status(501).json({
+    ingredients: [],
+    photos: [],
+    title: "whatever",
+    body: "whatever",
+  });
 });
 /**
  * Student code ends here
